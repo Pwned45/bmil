@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/">
+        <file>mainTaper.qml</file>
+        <file>TaperView.qml</file>
+    </qresource>
+</RCC>
