@@ -12,7 +12,6 @@ ListView {
     implicitHeight: height
 
     currentIndex: -1
-
     model: biometricModel
     spacing: 1
     orientation: Qt.Horizontal
@@ -56,7 +55,6 @@ ListView {
 //        console.log("released " + event.key)
 //    }
 
-
     delegate: Rectangle {
         height: 80
         width: 16
@@ -70,41 +68,6 @@ ListView {
                 fill : parent
                 margins: 5
             }
-
-//            Text {
-//                Layout.fillWidth: true
-//                Layout.fillHeight: true
-
-//                horizontalAlignment: Text.AlignLeft
-//                verticalAlignment: Text.AlignVCenter
-
-//                font {
-//                    pixelSize: 22
-//                }
-
-//                //elide: Text.ElideRight
-
-//                color: "red"
-
-//                text: downTime
-//            }
-//            Text {
-//                Layout.fillWidth: true
-//                Layout.fillHeight: true
-
-//                horizontalAlignment: Text.AlignLeft
-//                verticalAlignment: Text.AlignVCenter
-
-//                font {
-//                    pixelSize: 22
-//                }
-
-//                //elide: Text.ElideRight
-
-//                color: "red"
-
-//                text: upTime
-//            }
             Text {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
@@ -126,9 +89,13 @@ ListView {
     }
     ScrollView {
         anchors.fill: parent
+        anchors.margins: {
+            topMargin:45
+        }
+
         clip: true
             ScrollBar.vertical.policy: ScrollBar.AlwaysOn
-            contentHeight: 1600
+            contentHeight: 2300
             contentWidth: 800
     ColumnLayout {
         Connections {
@@ -148,6 +115,10 @@ ListView {
                 enterGist_ID.remove(a_index)
                 enterStaticGist_ID.remove(a_index)
                 console.log(a_index);
+            }
+            onAddToAmplitudeFunction: {
+                enterGist3_ID.append(a_index, a_value)
+                console.log(a_index)
             }
 
         }
@@ -205,7 +176,7 @@ ListView {
                 max: 10
                 labelFormat: "%.0f"
                 tickCount: 10
-                titleText: "Number of symbol"
+                titleText: "Number of symbol"                
             }
             color: "red"
             id: enterStaticGist_ID
@@ -266,6 +237,91 @@ ListView {
     }
     Text {
         text: "Absorption: " + biometricModel.absorption+ "ms"
+        font {
+            pixelSize: 22
+        }
+    }
+    Button {
+        text: "Calculate Vector"
+        onClicked: {
+            biometricModel.calculateVector()
+        }
+        font {
+            pixelSize: 22
+        }
+    }
+    Text {
+        text: "Biom Vector: " + biometricModel.vector
+        font {
+            pixelSize: 22
+        }
+    }
+    Rectangle {
+            color: "steelblue"
+            width: 130
+            height: 30
+    TextEdit {
+        id: userName_ID
+        text: "User Name"
+        font {
+            pixelSize: 22
+        }
+        color: "white"
+    }
+    }
+
+    Button {
+        text: "Save User"
+        onClicked: {
+            biometricModel.saveCurrWithName(userName_ID.text)
+        }
+        font {
+            pixelSize: 22
+        }
+    }
+    Button {
+        text: "Show Users"
+        onClicked: {
+            biometricModel.saveCurrWithName(userName_ID.text)
+        }
+        font {
+            pixelSize: 22
+        }
+    }
+    ChartView {
+
+        antialiasing: false
+        Layout.fillWidth: true
+        Layout.fillHeight: false
+        Layout.preferredHeight: 400
+        Layout.preferredWidth:800
+
+        LineSeries {
+            axisY: ValueAxis {
+                min: 0
+                max: 15
+//                labelFormat: "Hold time"
+                tickCount: 3
+                titleText: "Amplitude"
+            }
+            axisX: ValueAxis {
+                min: biometricModel.getMinTime() + 2300
+                max: biometricModel.getMinTime() + 10000
+                labelFormat: "%.0f"
+                tickCount: 10
+                titleText: "Key Times Value"
+            }
+
+            id: enterGist3_ID
+            name: "FunctionValue"
+            color: "black"
+        }
+    }
+    Button {
+        text: "Show Grafic"
+        onClicked: {
+            biometricModel.calculateGraphAmplitude()
+        }
         font {
             pixelSize: 22
         }

@@ -5,6 +5,8 @@
 #include <QKeyEvent>
 #include <QObject>
 #include <QTimer>
+#include <QtMath>
+#include <QJsonObject>
 #include <passwordcontroller.h>
 struct TapKey{
     int keyDownTime;
@@ -27,6 +29,9 @@ class BiometricKeyboardModel : public QAbstractListModel
     Q_PROPERTY(int pressTimeSum READ pressTimeSum NOTIFY statisticsChanged)
     Q_PROPERTY(int gallopSuperpos READ gallopSuperpos NOTIFY statisticsChanged)
     Q_PROPERTY(int absorption READ absorption NOTIFY statisticsChanged)
+
+    Q_PROPERTY(QString currname READ currname WRITE setCurrname NOTIFY currnameChanged)
+    Q_PROPERTY(QString vector READ vector WRITE setVector NOTIFY vectorChanged)
 
     Q_OBJECT
 public:
@@ -88,12 +93,37 @@ public:
 
     int absorption() const;
 
+    QString getStringFromTaper();
+
+    Q_INVOKABLE void askForName();
+    Q_INVOKABLE void saveCurrWithName(QString a_name);
+
+    const QString &currname() const;
+    void setCurrname(const QString &newCurrname);
+
+    int calculateFunction(int t);
+    double calculateHaar(int r, int m, int t);
+    Q_INVOKABLE void calculateVector();
+    void calculateAmplitude();
+    Q_INVOKABLE void calculateGraphAmplitude();
+    Q_INVOKABLE int getMinTime();
+
+    QString arrayToString(double *a_Array);
+
+    const QString &vector() const;
+    void setVector(const QString &newVector);
+
 signals:
     void complexityChanged();
     void addToGisrogramm(int a_index,int a_value);
     void removeFromGistogramm(int a_index);
     void statisticsChanged();
     void addToGisrogramm2(int a_index,double a_value);
+    void addToAmplitudeFunction(int a_index,int a_value);
+
+    void currnameChanged();
+
+    void vectorChanged();
 
 public slots:
 void onUpdateTimer();
@@ -118,6 +148,12 @@ private:
     int m_pressTimeSum= 0;
     int m_gallopSuperpos= 0;
     int m_absorption = 0;
+
+    QString m_currname ="";
+    QList<double> m_vectorList;
+    int m_amplitude;
+    QString m_vector;
+
 };
 
 #endif // BIOMETRICKEYBOARDMODEL_H

@@ -1,7 +1,10 @@
 #include "biometrickeyboardmodel.h"
 
 #include <QDate>
+#include <QFile>
+#include <QJsonDocument>
 #include <QKeySequence>
+#include <qmath.h>
 
 BiometricKeyboardModel::BiometricKeyboardModel(QAbstractListModel *parent) : QAbstractListModel(parent)
 {
@@ -128,7 +131,7 @@ void BiometricKeyboardModel::appendRow(QString a_key, int a_flag)
                             m_taper.at(m_taper.size()-1).keyUpTime -
                             m_taper.at(m_taper.size()-1).keyDownTime);
                 if (m_taper.size()>1)
-                addToGisrogramm2(m_taper.size()-1,(m_taper.at(m_taper.size()-1).keyDownTime
+                addToGisrogramm2(m_taper.size()-2,(m_taper.at(m_taper.size()-1).keyDownTime
                                   - m_taper.at(m_taper.size()-2).keyDownTime)/1000.0);
 }
 //            if(isSomethingPressed())
@@ -415,9 +418,184 @@ void BiometricKeyboardModel::onUpdateTimer()
     //    qDebug() << "timer = " << m_time;
 }
 
+const QString &BiometricKeyboardModel::vector() const
+{
+    return m_vector;
+}
+
+void BiometricKeyboardModel::setVector(const QString &newVector)
+{
+    if (m_vector == newVector)
+        return;
+    m_vector = newVector;
+    emit vectorChanged();
+}
+
+const QString &BiometricKeyboardModel::currname() const
+{
+    return m_currname;
+}
+
+void BiometricKeyboardModel::setCurrname(const QString &newCurrname)
+{
+    if (m_currname == newCurrname)
+        return;
+    m_currname = newCurrname;
+    emit currnameChanged();
+}
+
+int BiometricKeyboardModel::calculateFunction(int t)
+{
+int l_result = 0;
+    for (int i = 0; i < m_taper.size(); i++) {
+        if (m_taper.at(i).keyDownTime <= t && t <= m_taper.at(i).keyUpTime) {
+            l_result += m_amplitude;
+        }
+    }
+    return l_result;
+}
+
+double BiometricKeyboardModel::calculateHaar(int r, int m, int t)
+{
+    double rDouble = r;
+    double mDouble = m;
+    double tDouble = t/1000.0;
+    if (tDouble >= 1.0) {
+        tDouble = 0.999;
+    }
+    double result = 0.0;
+    if (((mDouble-1)/(rDouble*rDouble) <= tDouble) && (tDouble < ((mDouble-0.5)/(rDouble*rDouble)))) {
+        result = (rDouble/2)*(rDouble/2);
+    } else if ((((mDouble-0.5)/(rDouble*rDouble)) <= tDouble) && (tDouble <= (mDouble/(rDouble*rDouble)))) {
+        result = -(rDouble/2)*(rDouble/2);
+    }
+
+    return result;
+}
+
+void BiometricKeyboardModel::calculateVector()
+{
+
+    int n = m_taper.length();
+    calculateAmplitude();
+      double vector [n];
+      double functionResult = 0.0;
+      double haarResult = 0.0;
+      double countVariable = double(1.0 / n);
+      double sum = 0.0;
+
+      for (int i = 0; i < n; i++) {
+        for (int k = 0; k < n; k++) {
+            functionResult = static_cast<double>(calculateFunction(m_taper.at(k).keyDownTime));
+                    haarResult = calculateHaar(k, i, (m_taper.at(k).keyUpTime-m_taper.at(k).keyDownTime));
+                    sum += functionResult * haarResult;
+        }
+        vector[i] = sum * countVariable;
+        sum = 0.0;
+    }
+      QString l_str = "";
+      for (int i = 0 ; i <n; i++){
+          l_str += QString::number(vector[i])+ " ";
+      }
+      setVector(l_str);
+}
+
+void BiometricKeyboardModel::calculateAmplitude()
+{
+    int l_amplitude = 0;
+    for (TapKey t: m_taper){
+        if (l_amplitude < abs(t.keyUpTime-t.keyDownTime)){
+            l_amplitude = abs(t.keyUpTime-t.keyDownTime);
+        }
+    }
+    m_amplitude = l_amplitude;
+}
+
+void BiometricKeyboardModel::calculateGraphAmplitude()
+{
+    bool l_wasTop = false;
+    for (int i = 0; i< m_taper.size()-1; i++){
+        if (m_taper.at(i).keyUpTime <m_taper.at(i+1).keyUpTime) {
+            if (l_wasTop) {
+//                emit addToAmplitudeFunction(m_taper.at(i).keyDownTime,0);
+//                emit addToAmplitudeFunction(m_taper.at(i).keyDownTime,5);
+//                emit addToAmplitudeFunction(m_taper.at(i).keyUpTime,5);
+//                emit addToAmplitudeFunction(m_taper.at(i).keyUpTime,0);
+                l_wasTop = false;
+            } else {
+                emit addToAmplitudeFunction(m_taper.at(i).keyDownTime,0);
+                emit addToAmplitudeFunction(m_taper.at(i).keyDownTime,5);
+                emit addToAmplitudeFunction(m_taper.at(i).keyUpTime,5);
+                emit addToAmplitudeFunction(m_taper.at(i).keyUpTime,0);
+                l_wasTop = false;
+            }
+
+
+        } else {
+            emit addToAmplitudeFunction(m_taper.at(i).keyDownTime,0);
+            emit addToAmplitudeFunction(m_taper.at(i).keyDownTime,5);
+            emit addToAmplitudeFunction(m_taper.at(i+1).keyDownTime,5);
+            emit addToAmplitudeFunction(m_taper.at(i+1).keyDownTime,10);
+            emit addToAmplitudeFunction(m_taper.at(i+1).keyUpTime,10);
+            emit addToAmplitudeFunction(m_taper.at(i+1).keyUpTime,5);
+            emit addToAmplitudeFunction(m_taper.at(i).keyUpTime,5);
+            emit addToAmplitudeFunction(m_taper.at(i).keyUpTime,0);
+            i++;
+            l_wasTop = true;
+        }
+    }
+}
+
+int BiometricKeyboardModel::getMinTime()
+{
+     m_qtime = new QDateTime();
+     return m_qtime->currentMSecsSinceEpoch();
+}
+
+QString BiometricKeyboardModel::arrayToString(double *a_Array)
+{
+    QString l_str = "";
+    for (int i = 0 ; i < m_taper.size(); i++){
+        l_str += QString::number(a_Array[i])+ " ";
+    }
+}
+
 int BiometricKeyboardModel::absorption() const
 {
     return m_absorption;
+}
+
+QString BiometricKeyboardModel::getStringFromTaper()
+{
+    QString l_pass = "";
+    for (TapKey t: m_taper){
+        l_pass+= t.key;
+    }
+    return l_pass;
+}
+
+void BiometricKeyboardModel::askForName()
+{
+
+}
+
+void BiometricKeyboardModel::saveCurrWithName(QString a_name)
+{
+    calculateVector();
+    QJsonObject recordObject;
+    recordObject.insert("User Name", a_name);
+    recordObject.insert("User Pass", getStringFromTaper());
+    recordObject.insert("Vector", m_vector);
+
+    QJsonDocument doc(recordObject);
+    QString jsonString = doc.toJson(QJsonDocument::Indented);
+    QFile file;
+    file.setFileName("C:/Users/Daniil/Desktop/fm/db.json");
+    file.open(QIODevice::WriteOnly | QIODevice::Text);
+    QTextStream stream( &file );
+    stream << jsonString;
+        file.close();
+
 }
 
 int BiometricKeyboardModel::pressTimeSum() const
