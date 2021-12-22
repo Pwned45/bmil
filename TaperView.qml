@@ -270,19 +270,38 @@ ListView {
     }
     }
 
+//    Button {
+//        text: "Save User"
+//        onClicked: {
+//            biometricModel.saveCurrWithName(userName_ID.text)
+//        }
+//        font {
+//            pixelSize: 22
+//        }
+//    }
+//    Button {
+//        text: "Show Users"
+//        onClicked: {
+//            biometricModel.saveCurrWithName(userName_ID.text)
+//        }
+//        font {
+//            pixelSize: 22
+//        }
+//    }
+
     Button {
-        text: "Save User"
+        text: "Register"
         onClicked: {
-            biometricModel.saveCurrWithName(userName_ID.text)
+            biometricModel.registerClick(userName_ID.text);
         }
         font {
             pixelSize: 22
         }
     }
     Button {
-        text: "Show Users"
+        text: "Autorization"
         onClicked: {
-            biometricModel.saveCurrWithName(userName_ID.text)
+            biometricModel.autorizationClick(userName_ID.text);
         }
         font {
             pixelSize: 22
@@ -300,7 +319,7 @@ ListView {
             axisY: ValueAxis {
                 min: 0
                 max: 15
-//                labelFormat: "Hold time"
+                //                labelFormat: "Hold time"
                 tickCount: 3
                 titleText: "Amplitude"
             }

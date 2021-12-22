@@ -18,7 +18,9 @@ BiometricKeyboardModel::BiometricKeyboardModel(QAbstractListModel *parent) : QAb
     m_time = 0;
     connect(m_timer, SIGNAL(timeout()),this,SLOT(onUpdateTimer()));
     m_timer->start(5);
-
+//    m_db.setDbName("usersDB");
+    m_db = BiometricDB("usersDB");
+    m_db.load();
 //    qDebug() <<;
 
 }
@@ -429,6 +431,24 @@ void BiometricKeyboardModel::setVector(const QString &newVector)
         return;
     m_vector = newVector;
     emit vectorChanged();
+    QStringList l_list= newVector.split(" ");
+    for(QString l :l_list){
+        m_vectorList.append(l.toDouble());
+    }
+
+}
+
+void BiometricKeyboardModel::autorizationClick(QString name)
+{
+    qDebug() << m_db.autorization(BiometricUser(m_db.users().size(),name,getStringFromTaper(),m_vectorList));
+
+}
+
+void BiometricKeyboardModel::registerClick(QString name)
+{
+    qDebug() << m_db.append(BiometricUser(m_db.users().size(),name,getStringFromTaper(),m_vectorList));
+    m_db.save();
+
 }
 
 const QString &BiometricKeyboardModel::currname() const

@@ -8,6 +8,7 @@
 #include <QtMath>
 #include <QJsonObject>
 #include <passwordcontroller.h>
+#include "JsonOperations/biometricdb.h"
 struct TapKey{
     int keyDownTime;
     int keyUpTime;
@@ -113,6 +114,9 @@ public:
     const QString &vector() const;
     void setVector(const QString &newVector);
 
+    Q_INVOKABLE void autorizationClick(QString name);
+    Q_INVOKABLE void registerClick(QString name);
+
 signals:
     void complexityChanged();
     void addToGisrogramm(int a_index,int a_value);
@@ -153,6 +157,8 @@ private:
     QList<double> m_vectorList;
     int m_amplitude;
     QString m_vector;
+
+    BiometricDB m_db;
 
 };
 
